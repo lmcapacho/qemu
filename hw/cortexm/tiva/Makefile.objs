@@ -1,5 +1,6 @@
 # [GNU ARM Eclipse]
 
-obj-$(CONFIG_TIVA) += mcus.o boards.o
+obj-$(CONFIG_TIVA) += mcu.o mcus.o
+obj-$(CONFIG_TIVA) += gpio.o
 
 # [GNU ARM Eclipse]

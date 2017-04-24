@@ -1,6 +1,6 @@
 # [GNU ARM Eclipse]
 
 obj-$(CONFIG_SAM) += mcu.o mcus.o
-obj-$(CONFIG_SAM) += pio.o
+obj-$(CONFIG_SAM) += port.o
 
 # [GNU ARM Eclipse]
