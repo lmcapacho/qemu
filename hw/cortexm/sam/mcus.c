@@ -46,6 +46,9 @@ static const SAMCapabilities sam3x8e = {
     .has_piob = true,
     .has_pioc = true,
     .has_piod = true,
+    
+    .hsi_freq_hz = 83000000,
+    .lsi_freq_hz = 4000000,
 };
 
 // ----------------------------------------------------------------------------
@@ -61,7 +64,7 @@ static const SAMPartInfo sam_mcus[] = {
             .svd_device_name = "SAM3X8E",
         /**/
         },
-
+        
         .sam = &sam3x8e,
     /**/
     },

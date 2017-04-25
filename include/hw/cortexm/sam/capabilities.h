@@ -46,6 +46,8 @@ typedef struct {
     sam_family_t family;
 
     // Properties common to all families
+    uint32_t hsi_freq_hz;
+    uint32_t lsi_freq_hz;
 
     // PIOs
     unsigned int has_pioa :1;

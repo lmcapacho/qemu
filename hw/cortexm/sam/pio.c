@@ -1519,7 +1519,6 @@ static void sam_pio_sodr_post_write_callback(Object *reg, Object *periph,
         peripheral_register_t value, peripheral_register_t full_value)
 {
     SAMPIOState *state = SAM_PIO_STATE(periph);
-	
     uint32_t old_value = peripheral_register_read_value(state->reg.odsr);
 
 	uint32_t set_pins = old_value | full_value;
@@ -1533,7 +1532,6 @@ static void sam_pio_codr_post_write_callback(Object *reg, Object *periph,
         peripheral_register_t value, peripheral_register_t full_value)
 {
     SAMPIOState *state = SAM_PIO_STATE(periph);
-
     uint32_t old_value = peripheral_register_read_value(state->reg.odsr);
 
 	uint32_t clear_pins = old_value & (~full_value);
@@ -1549,7 +1547,10 @@ static void sam_pio_oer_post_write_callback(Object *reg, Object *periph,
 {
     SAMPIOState *state = SAM_PIO_STATE(periph);
 	
-	peripheral_register_set_raw_value(state->reg.osr, value);
+	uint32_t old_value = peripheral_register_read_value(state->reg.osr);
+	uint32_t new_value = old_value | full_value;
+	
+	peripheral_register_set_raw_value(state->reg.osr, new_value);
 }
 
 #if 0

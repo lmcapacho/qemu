@@ -72,7 +72,10 @@ typedef struct SAMMCUState {
     const SAMCapabilities *capabilities;
 
     Object *container;
-
+    
+    uint32_t hse_freq_hz;
+    uint32_t lse_freq_hz;
+    
     DeviceState *pio[SAM_MAX_PIO];
     int num_pio;
 

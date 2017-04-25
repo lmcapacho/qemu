@@ -195,7 +195,6 @@ static void sam_mcu_instance_init_callback(Object *obj)
 {
     qemu_log_function_name();
 
-	/*
     SAMMCUState *state = SAM_MCU_STATE(obj);
 
     cm_object_property_add_uint32(obj, "hse-freq-hz", &state->hse_freq_hz);
@@ -203,7 +202,6 @@ static void sam_mcu_instance_init_callback(Object *obj)
 
     cm_object_property_add_uint32(obj, "lse-freq-hz", &state->lse_freq_hz);
     state->lse_freq_hz = 0;
-    */
 }
 
 static void sam_mcu_class_init_callback(ObjectClass *klass, void *data)
