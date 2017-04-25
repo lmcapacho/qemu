@@ -39,7 +39,7 @@ typedef enum {
     SAMD_FAMILY_SAMD21,
 } samd_family_t;
 
-#define SAMD_MAX_PINS  (20)
+#define SAMD_MAX_PINS  (32)
 
 typedef struct {
 
