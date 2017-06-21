@@ -50,6 +50,9 @@ typedef enum {
 
 #define TM_GPIO_PIN_COUNT    (32)
 
+#define TM_IRQ_GPIO_DATA_IN          	"data-in"
+#define TM_IRQ_GPIO_ARMEMUS_OUT         "armemus-out"
+
 // ----------------------------------------------------------------------------
 
 #define TYPE_TM_GPIO TYPE_TM_PREFIX "gpio" TYPE_PERIPHERAL_SUFFIX
@@ -79,6 +82,10 @@ typedef struct {
 
 // ----------------------------------------------------------------------------
 
+void tm_port_armemus_write_callback(const char *str);
+
+// ----------------------------------------------------------------------------
+
 // Instance definitions.
 #define TM_GPIO_STATE(obj) \
     OBJECT_CHECK(TMGPIOState, (obj), TYPE_TM_GPIO)
@@ -91,6 +98,7 @@ typedef struct {
     const TIVACapabilities *capabilities;
 	
     tm_gpio_index_t port_index;
+    qemu_irq armemus_irq[TM_GPIO_PIN_COUNT];
     
     // TM4C GPIO (Register map for GPIO peripheral) registers.
     struct { 
