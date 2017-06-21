@@ -28,6 +28,8 @@
 #include <hw/cortexm/samd/port.h>
 #include <hw/cortexm/parson.h>
 
+#include <hw/cortexm/armemus.h>
+
 // ----------------------------------------------------------------------------
 
 #define TYPE_SAMD_MCU "samd-mcu"

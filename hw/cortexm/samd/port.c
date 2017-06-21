@@ -158,6 +158,72 @@ static void samd_port_outclr_post_write_callback(Object *reg, Object *periph,
 	samd_port_update_output(state, old_value, clear_pins);
 }
 
+static void samd_port_dirset_post_write_callback(Object *reg, Object *periph,
+        uint32_t addr, uint32_t offset, unsigned size,
+        peripheral_register_t value, peripheral_register_t full_value)
+{
+    SAMDPORTState *state = SAMD_PORT_STATE(periph);
+
+    uint32_t old_value = peripheral_register_read_value(state->reg.dir);
+
+	uint32_t set_pins = old_value | full_value;
+	peripheral_register_write_value(state->reg.dir, set_pins); 
+
+}
+
+static void samd_port_dirclr_post_write_callback(Object *reg, Object *periph,
+        uint32_t addr, uint32_t offset, unsigned size,
+        peripheral_register_t value, peripheral_register_t full_value)
+{
+    SAMDPORTState *state = SAMD_PORT_STATE(periph);
+
+    uint32_t old_value = peripheral_register_read_value(state->reg.dir);
+
+	uint32_t clear_pins = old_value & (~full_value);
+	peripheral_register_write_value(state->reg.dir, clear_pins);
+
+}
+
+// Callback fired when a PORT input pin changes state (based
+// on an external stimulus from the machine).
+static void samd_port_in_irq_handler(void *opaque, int n, int level)
+{
+    qemu_log_mask(LOG_FUNC, "%s(%d,%d) \n", __FUNCTION__, n, level);
+
+//    assert(n < 16);
+
+    SAMDPORTState *state = SAMD_PORT_STATE(opaque);
+    unsigned pin = n;
+
+//    assert(pin < STM32_GPIO_PIN_COUNT);
+
+    const SAMDCapabilities *capabilities = state->capabilities;
+    assert(capabilities != NULL);
+
+    Object *in;
+    // Update internal pin state.
+    switch (capabilities->family) {
+    case SAMD_FAMILY_SAMD21:
+
+        in = state->u.samd21.reg.in;
+        break;
+
+    default:
+        assert(false);
+        return;
+    }
+
+    // TODO: check if a mutex is needed,
+    // this can be called from the graphic thread.
+    if (level == 0) {
+        // Clear the IDR bit.
+        peripheral_register_and_raw_value(in, ~(1 << pin));
+    } else {
+        // Set the IDR bit.
+        peripheral_register_or_raw_value(in, (1 << pin));
+    }   
+}
+
 #if 0
 static peripheral_register_t samd_port_xxx_pre_write_callback(Object *reg,
         Object *periph, uint32_t addr, uint32_t offset, unsigned size,
@@ -213,16 +279,39 @@ static void samd_port_xxx_post_read_callback(Object *reg, Object *periph,
 #endif
 
 // ----------------------------------------------------------------------------
+void samd_port_armemus_write_callback(const char *str)
+{
+	Object *gpio = object_resolve_path("PORT", NULL);           	
+	SAMDPORTState *state = SAMD_PORT_STATE(gpio);
+	
+	char *split;	
+	int pin, value;
+	
+	split = strtok ((char *)str,":");
+	split = strtok (NULL, ":");
+	pin = (int)strtol(split, NULL, 10);
+
+	split = strtok (NULL, ":");
+	value = (int)strtol(split, NULL, 10);
+		
+	cm_irq_set(state->armemus_irq[pin], value);
+}
 
 static void samd_port_instance_init_callback(Object *obj)
 {
     qemu_log_function_name();
 
-    //SAMDPORTState *state = SAMD_PORT_STATE(obj);
+    SAMDPORTState *state = SAMD_PORT_STATE(obj);
 
     // Capabilities are not yet available.
     
     // TODO: Add code to initialise all members.
+    
+    cm_irq_init_out(DEVICE(obj), state->armemus_irq, SAMD_IRQ_GPIO_ARMEMUS_OUT,
+    SAMD_MAX_PINS);
+    
+    cm_irq_init_in(DEVICE(obj), samd_port_in_irq_handler ,
+    SAMD_IRQ_PORT_IN_IN , SAMD_MAX_PINS);
 }
 
 static void samd_port_realize_callback(DeviceState *dev, Error **errp)
@@ -257,6 +346,9 @@ static void samd_port_realize_callback(DeviceState *dev, Error **errp)
 
         atsamd21g18a_port_create_objects(obj, cm_state->svd_json, periph_name);
 
+		state->reg.dir	= state->u.samd21.reg.dir;
+		state->reg.dirset	= state->u.samd21.reg.dirset;
+		state->reg.dirclr	= state->u.samd21.reg.dirclr;
         state->reg.out		= state->u.samd21.reg.out;        
         state->reg.outset  	= state->u.samd21.reg.outset;
         state->reg.outclr  	= state->u.samd21.reg.outclr;	
@@ -270,6 +362,8 @@ static void samd_port_realize_callback(DeviceState *dev, Error **errp)
         // peripheral_register_set_post_read(state->samd21.reg.xxx, &samd_port_xxx_post_read_callback);
         // peripheral_register_set_pre_read(state->samd21.reg.xxx, &samd_port_xxx_pret_read_callback);
         // peripheral_register_set_post_write(state->samd21.reg.xxx, &samd_port_xxx_post_write_callback);
+		peripheral_register_set_post_write(state->reg.dirset, &samd_port_dirset_post_write_callback);
+		peripheral_register_set_post_write(state->reg.dirclr, &samd_port_dirclr_post_write_callback);
 		peripheral_register_set_post_write(state->reg.outset, &samd_port_outset_post_write_callback);
 		peripheral_register_set_post_write(state->reg.outclr, &samd_port_outclr_post_write_callback);
 		
@@ -283,6 +377,11 @@ static void samd_port_realize_callback(DeviceState *dev, Error **errp)
     }
 
     peripheral_prepare_registers(obj);
+	
+	for (int i = 0; i < SAMD_MAX_PINS; ++i) {
+        cm_irq_connect(DEVICE(obj), SAMD_IRQ_GPIO_ARMEMUS_OUT, i,
+                DEVICE(obj), SAMD_IRQ_PORT_IN_IN, i);
+    }
 }
 
 static void samd_port_reset_callback(DeviceState *dev)
