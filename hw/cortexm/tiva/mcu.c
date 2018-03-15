@@ -53,7 +53,7 @@ static void tiva_mcu_realize_callback(DeviceState *dev, Error **errp)
     if (!cm_device_parent_realize(dev, errp, TYPE_TIVA_MCU)) {
         return;
     }
-    
+
     TIVAMCUState *state = TIVA_MCU_STATE(dev);
     TIVACapabilities *capabilities = g_new0(TIVACapabilities, 1);
 
@@ -159,8 +159,6 @@ static void tiva_mcu_realize_callback(DeviceState *dev, Error **errp)
         create_gpio(state, TM_PORT_GPIOF);
         state->num_port = 6;
     }
-    
-    cortexm_init_armemus_thread(tm_port_armemus_write_callback);
 }
 
 static int tiva_mcu_reset_object(Object *obj, void *opaque)

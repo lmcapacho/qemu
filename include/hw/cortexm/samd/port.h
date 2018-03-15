@@ -30,8 +30,6 @@
 
 #define DEVICE_PATH_SAMD_PORT DEVICE_PATH_SAMD "PORT"
 
-#define SAMD_IRQ_PORT_IN_IN         	"in-in"
-#define SAMD_IRQ_GPIO_ARMEMUS_OUT       "armemus-out"
 
 // ----------------------------------------------------------------------------
 
@@ -62,10 +60,6 @@ typedef struct {
 
 // ----------------------------------------------------------------------------
 
-void samd_port_armemus_write_callback(const char *value);
-
-// ----------------------------------------------------------------------------
-
 // Instance definitions.
 #define SAMD_PORT_STATE(obj) \
     OBJECT_CHECK(SAMDPORTState, (obj), TYPE_SAMD_PORT)
@@ -76,8 +70,6 @@ typedef struct {
     // public:
 
     const SAMDCapabilities *capabilities;
-    
-    qemu_irq armemus_irq[SAMD_MAX_PINS];
     
     // SAMD21 PORT (Port Module) registers.
     struct { 

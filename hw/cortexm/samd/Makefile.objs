@@ -1,6 +1,6 @@
 # [GNU ARM Eclipse]
 
-obj-$(CONFIG_SAM) += mcu.o mcus.o
-obj-$(CONFIG_SAM) += port.o
+obj-$(CONFIG_SAMD) += mcu.o mcus.o
+obj-$(CONFIG_SAMD) += port.o
 
 # [GNU ARM Eclipse]

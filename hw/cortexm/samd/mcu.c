@@ -46,7 +46,7 @@ static void samd_mcu_realize_callback(DeviceState *dev, Error **errp)
     if (!cm_device_parent_realize(dev, errp, TYPE_SAMD_MCU)) {
         return;
     }
-	
+
     SAMDMCUState *state = SAMD_MCU_STATE(dev);
     SAMDCapabilities *capabilities = g_new0(SAMDCapabilities, 1);
 
@@ -124,8 +124,7 @@ static void samd_mcu_realize_callback(DeviceState *dev, Error **errp)
 
         state->port = DEVICE(port);
     }
-    
-	cortexm_init_armemus_thread(samd_port_armemus_write_callback);
+
 }
 
 static int samd_mcu_reset_object(Object *obj, void *opaque)

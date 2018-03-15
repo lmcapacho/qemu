@@ -160,7 +160,7 @@ static void tm_gpio_update_output(TMGPIOState *state, uint32_t old_value, uint32
 {
     // Compute pins that changed value.
     uint32_t changed = old_value ^ new_value;
-    uint32_t dir_value = peripheral_register_read_value(state->reg.dir);
+
 	char gpio_name[3];
     snprintf(gpio_name, sizeof(gpio_name), "P%c",
             'A' + state->port_index - TM_PORT_GPIOA);
@@ -168,14 +168,12 @@ static void tm_gpio_update_output(TMGPIOState *state, uint32_t old_value, uint32
 	int pin;
 	uint32_t mask = 1;
 	for (pin = 0; pin < TM_GPIO_PIN_COUNT; pin++, mask <<= 1) {
-        if((dir_value & mask)!=0){
-            if ((changed & mask) != 0) {
-    			fprintf(stderr, "%s", gpio_name);
-    			if( new_value & mask )
-    				fprintf(stderr, "%d:HIGH\n", pin);
-    			else
-    				fprintf(stderr, "%d:LOW\n", pin);
-            }
+        if ((changed & mask) != 0) {
+			fprintf(stderr, "%s", gpio_name);
+			if( new_value & mask )
+				fprintf(stderr, "%d:HIGH\n", pin);
+			else
+				fprintf(stderr, "%d:LOW\n", pin);
         }
     }
 }
@@ -248,51 +246,6 @@ static void tm_gpio_xxx_post_read_callback(Object *reg, Object *periph,
 
 // ----------------------------------------------------------------------------
 
-void tm_port_armemus_write_callback(const char *str)
-{
-	char *split;	
-	int pin, value;
-	char port;
-	port = str[1];
-	
-	split = strtok ((char *)str,":");
-	split = strtok (NULL, ":");
-	pin = (int)strtol(split, NULL, 10);
-
-	split = strtok (NULL, ":");
-	value = (int)strtol(split, NULL, 10);
-	
-	char gpio_name[40];
-    snprintf(gpio_name, sizeof(gpio_name), DEVICE_PATH_TIVA "GPIO%c",
-            port - TM_PORT_GPIOA);
-            
- 	Object *gpio = object_resolve_path(gpio_name, NULL);           	
-	TMGPIOState *state = TM_GPIO_STATE(gpio);	
-	cm_irq_set(state->armemus_irq[pin], value);
-}
-
-
-static void tm_gpio_in_irq_handler(void *opaque, int n, int level)
-{
-    TMGPIOState *state = TM_GPIO_STATE(opaque);
-
-    Object *data = state->reg.data;
-    
-    unsigned pin = n;
-
-    // TODO: check if a mutex is needed,
-    // this can be called from the graphic thread.
-    if (level == 0) {
-        // Clear the IDR bit.
-        peripheral_register_and_raw_value(data, ~(1 << pin));
-    } else {
-        // Set the IDR bit.
-        peripheral_register_or_raw_value(data, (1 << pin));
-    }
-
-}
-
-
 static void tm_gpio_instance_init_callback(Object *obj)
 {
     qemu_log_function_name();
@@ -303,12 +256,7 @@ static void tm_gpio_instance_init_callback(Object *obj)
             (const int *) &state->port_index);
     state->port_index = TM_PORT_GPIO_UNDEFINED;
     
-    cm_irq_init_out(DEVICE(obj), state->armemus_irq, TM_IRQ_GPIO_ARMEMUS_OUT,
-    TM_GPIO_PIN_COUNT);
-    
     // Capabilities are not yet available.
-    cm_irq_init_in(DEVICE(obj), tm_gpio_in_irq_handler,
-    TM_IRQ_GPIO_DATA_IN, TM_GPIO_PIN_COUNT);
 }
 
 static void tm_gpio_realize_callback(DeviceState *dev, Error **errp)
@@ -346,7 +294,6 @@ static void tm_gpio_realize_callback(DeviceState *dev, Error **errp)
         tm4c123gh6pm_gpio_create_objects(obj, cm_state->svd_json, periph_name);
 
 		state->reg.data = state->u.tm4c.reg.data;
-        state->reg.dir =  state->u.tm4c.reg.dir;
         // TODO: add actions.
         // cm_object_property_set_str(state->u.tm4c.fld.xxx.fff, "GGG", "follows");
         // cm_object_property_set_str(state->u.tm4c.fld.xxx.fff, "GGG", "cleared-by");
@@ -368,11 +315,6 @@ static void tm_gpio_realize_callback(DeviceState *dev, Error **errp)
     }
 
     peripheral_prepare_registers(obj);
-    
-    for (int i = 0; i < TM_GPIO_PIN_COUNT; ++i) {
-        cm_irq_connect(DEVICE(obj), TM_IRQ_GPIO_ARMEMUS_OUT, i,
-                DEVICE(obj), TM_IRQ_GPIO_DATA_IN, i);
-    }
 }
 
 static void tm_gpio_reset_callback(DeviceState *dev)
@@ -405,3 +347,5 @@ static void tm_gpio_register_types(void)
 }
 
 type_init(tm_gpio_register_types);
+
+// ----------------------------------------------------------------------------
