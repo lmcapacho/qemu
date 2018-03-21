@@ -27,5 +27,6 @@ obj-$(CONFIG_LPC) += lpc/
 obj-$(CONFIG_TIVA) += tiva/
 obj-$(CONFIG_XMC) += xmc/
 obj-$(CONFIG_SAM) += sam/
+obj-$(CONFIG_SAMD) += samd/
 
 # [GNU ARM Eclipse]
